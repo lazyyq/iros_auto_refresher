@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+config.json
+session.txt
+logs/
+chromedriver/
+edgedriver/
+.test-*/
