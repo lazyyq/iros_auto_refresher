@@ -7,9 +7,9 @@ import logging
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QTimer, Qt
-from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget)
 
 from app_logging import LogBridge, configure_logging

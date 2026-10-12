@@ -2,7 +2,7 @@
 
 ## 프로젝트 목적
 
-Windows x64에서 PyQt6·Selenium으로 인터넷등기소 `PM10SESSIONID`를 파일에 저장하고
+Windows x64에서 PyQt5·Selenium으로 인터넷등기소 `PM10SESSIONID`를 파일에 저장하고
 주기적으로 headless 접속하는 데스크톱 앱이다. 사용자 대화에서 확정한 요구사항을 우선한다.
 캡챠와 로그인은 사용자가 직접 처리한다.
 

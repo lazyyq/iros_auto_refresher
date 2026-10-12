@@ -1,13 +1,18 @@
 # 인터넷등기소 세션 자동 갱신
 
-Windows용 PyQt6 GUI에서 Selenium으로 인터넷등기소에 접속하고, HTTPOnly 쿠키
+Windows용 PyQt5 GUI에서 Selenium으로 인터넷등기소에 접속하고, HTTPOnly 쿠키
 `PM10SESSIONID` 값을 지정한 텍스트 파일에 저장합니다. 일반 브라우저 창에서
 직접 로그인할 수 있으며, 자동 접속은 headless로 수행합니다.
 
 ## 설치와 실행
 
 Windows x64, Python 3.10 이상, Chrome 115 이상 또는 Chromium 기반 Edge가 필요합니다.
-Python 3.14에서 개발·검증했습니다.
+기존 PyQt6 환경에서 전환할 때는 아래 명령으로 GUI 의존성을 교체합니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip uninstall -y PyQt6 PyQt6-Qt6 PyQt6-sip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 
 ```powershell
 python -m venv .venv

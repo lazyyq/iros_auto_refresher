@@ -1,7 +1,7 @@
 """GUI entrypoint for IROS Auto Refresher."""
 import sys
 
-from PyQt6.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication
 from gui import MainWindow
 
 
@@ -10,7 +10,7 @@ def main() -> int:
     app.setApplicationName("IROS Auto Refresher")
     window = MainWindow()
     window.show()
-    return app.exec()
+    return app.exec_()
 
 
 if __name__ == "__main__":
