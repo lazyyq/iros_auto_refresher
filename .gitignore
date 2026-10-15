@@ -7,3 +7,6 @@ logs/
 chromedriver/
 edgedriver/
 .test-*/
+build/
+dist/
+*.spec

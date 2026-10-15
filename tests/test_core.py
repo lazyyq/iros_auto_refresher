@@ -11,7 +11,7 @@ import urllib.error
 import zipfile
 
 from app_logging import SecretFilter, SafeFormatter
-from browser import BrowserWorker, capture_session, injected_cookie, refresh
+from browser import BrowserWorker, capture_session, create_driver, injected_cookie, refresh
 from drivers import Cancelled, DriverManager, chrome_release, edge_latest
 from settings import ROOT, COOKIE_NAME, Settings, SettingsStore, atomic_write, read_session, resolve_path
 
@@ -79,6 +79,27 @@ class SettingsTests(TemporaryTest):
         for name in ("config.json", "main.py", "logs/iros_auto_refresher.log", "chromedriver/153/driver.json"):
             with self.assertRaises(ValueError):
                 Settings(session_file=name).validate(self.root, browser_required=False)
+
+
+class BrowserCreationTests(unittest.TestCase):
+    def test_both_browsers_use_explicit_binary_driver_and_options(self):
+        for browser, prefix in (("chrome", "Chrome"), ("edge", "Edge")):
+            for headless in (False, True):
+                with self.subTest(browser=browser, headless=headless), \
+                     patch(f"browser.{prefix}Service") as service, \
+                     patch(f"browser.{prefix}Driver") as constructor:
+                    binary = Path("chrome.exe" if browser == "chrome" else "msedge.exe")
+                    driver_path = Path("driver.exe")
+                    driver = create_driver(Settings(browser=browser), binary, driver_path, headless)
+                    options = constructor.call_args.kwargs["options"]
+                    self.assertEqual(options.binary_location, str(binary))
+                    self.assertEqual(options.capabilities["browserName"],
+                                     "chrome" if browser == "chrome" else "MicrosoftEdge")
+                    self.assertEqual("--headless=new" in options.arguments, headless)
+                    self.assertEqual(service.call_args.kwargs["executable_path"], str(driver_path))
+                    self.assertIs(constructor.call_args.kwargs["service"], service.return_value)
+                    self.assertIs(driver, constructor.return_value)
+                    driver.set_page_load_timeout.assert_called_once_with(60)
 
 
 class SessionTests(TemporaryTest):

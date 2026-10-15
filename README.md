@@ -24,6 +24,25 @@ python -m venv .venv
 실행 위치와 관계없이 같은 폴더의 `.venv\Scripts\python.exe`로 `main.py`를 실행합니다.
 가상환경이 없거나 실행 오류가 발생하면 콘솔에서 내용을 확인할 수 있도록 대기합니다.
 
+## EXE 패키징
+
+Windows x64에서 프로젝트 폴더를 열고 같은 가상환경으로 빌드합니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-build.txt
+.\.venv\Scripts\python.exe -m PyInstaller --clean --noconfirm --onefile --windowed --name IrosAutoRefresher --collect-submodules selenium main.py
+```
+
+생성된 `dist\IrosAutoRefresher.exe`를 다른 PC로 복사해 실행합니다.
+대상 PC에는 Chrome 또는 Edge가 설치되어 있어야 합니다.
+설정·세션 파일·로그·드라이버는 EXE 폴더에 생성됩니다(세션 경로를 별도 지정한 경우 제외).
+
+Selenium의 동적 import가 빌드에서 누락되지 않도록 하위 모듈을 명시적으로 포함합니다.
+`No module named 'selenium.webdriver.edge.options'` 오류가 발생한 기존 EXE는
+위 명령으로 다시 빌드한 EXE로 교체하세요. 기존 `.spec`으로 빌드하는 경우에도
+`Analysis`의 `hiddenimports`에 `collect_submodules("selenium")`를 반영해야 합니다
+(`from PyInstaller.utils.hooks import collect_submodules`).
+
 ## 사용 방법
 
 1. Chrome 또는 Edge를 선택하고 해당 `chrome.exe` 또는 `msedge.exe` 경로를 지정합니다.

@@ -10,10 +10,13 @@ import threading
 from urllib.parse import urlparse
 
 from PyQt5.QtCore import QThread, pyqtSignal
-from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
+from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.edge.webdriver import WebDriver as EdgeDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -27,7 +30,7 @@ LOG = logging.getLogger("iros")
 
 
 def create_driver(settings: Settings, binary: Path, driver_path: Path, headless: bool):
-    options = webdriver.ChromeOptions() if settings.browser == "chrome" else webdriver.EdgeOptions()
+    options = ChromeOptions() if settings.browser == "chrome" else EdgeOptions()
     options.binary_location = str(binary)
     options.add_argument("--window-size=1440,1000")
     options.add_argument("--no-first-run")
@@ -37,7 +40,7 @@ def create_driver(settings: Settings, binary: Path, driver_path: Path, headless:
     service = service_type(executable_path=str(driver_path), log_output=subprocess.DEVNULL)
     if os.name == "nt":
         service.creation_flags = subprocess.CREATE_NO_WINDOW
-    constructor = webdriver.Chrome if settings.browser == "chrome" else webdriver.Edge
+    constructor = ChromeDriver if settings.browser == "chrome" else EdgeDriver
     try:
         driver = constructor(service=service, options=options)
     except Exception:
