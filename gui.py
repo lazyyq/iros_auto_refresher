@@ -51,8 +51,10 @@ class MainWindow(QMainWindow):
         self.manual_button = QPushButton("수동 로그인")
         self.capture_button = QPushButton("로그인 완료·세션 저장")
         self.start_button = QPushButton("자동 갱신 시작")
+        self.refresh_button = QPushButton("즉시 갱신")
         self.stop_button = QPushButton("중지")
-        for button in (self.save_button, self.manual_button, self.capture_button, self.start_button, self.stop_button):
+        for button in (self.save_button, self.manual_button, self.capture_button,
+                       self.start_button, self.refresh_button, self.stop_button):
             buttons.addWidget(button)
         layout.addLayout(buttons)
         self.status = QLabel("대기")
@@ -76,6 +78,7 @@ class MainWindow(QMainWindow):
         self.manual_button.clicked.connect(self.start_manual)
         self.capture_button.clicked.connect(self.capture_manual)
         self.start_button.clicked.connect(self.start_auto)
+        self.refresh_button.clicked.connect(self.refresh_now)
         self.stop_button.clicked.connect(self.stop)
         self.timer = QTimer(self)
         self.timer.setInterval(500)
@@ -135,6 +138,7 @@ class MainWindow(QMainWindow):
         self.save_button.setEnabled(not busy and not self.automatic and not self.closing)
         self.start_button.setEnabled(not busy and not self.automatic and not self.closing)
         self.manual_button.setEnabled(not busy and not self.closing)
+        self.refresh_button.setEnabled(not busy and not self.closing)
         self.stop_button.setEnabled((busy or self.automatic) and not self.closing)
         if not busy:
             self.capture_button.setEnabled(False)
@@ -155,6 +159,14 @@ class MainWindow(QMainWindow):
             self.log.info("수동 로그인 동안 자동 갱신 예약 일시 중단")
         self.next_due = None
         self.launch(True)
+
+    def refresh_now(self):
+        if self.worker is not None or self.closing:
+            return
+        if not self.automatic and not self.collect_settings():
+            return
+        self.log.info("즉시 갱신 요청")
+        self.launch(False)
 
     def launch(self, manual: bool):
         if self.worker is not None or self.closing:

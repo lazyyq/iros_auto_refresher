@@ -106,6 +106,88 @@ class GuiTests(unittest.TestCase):
         self.assertIsNotNone(self.window.next_due)
         self.assertEqual(self.window.log_view.toPlainText().count("다음 자동 갱신 예정:"), 2)
 
+    def test_refresh_now_replaces_schedule_from_completion(self):
+        with patch("gui.time.monotonic", return_value=1000) as clock:
+            self.window.start_auto()
+            self.window.worker.finish()
+            self.assertEqual(self.window.next_due, 1900)
+            clock.return_value = 1300
+            self.assertTrue(self.window.refresh_button.isEnabled())
+            self.window.refresh_button.click()
+            worker = self.window.worker
+            self.assertIsNotNone(worker)
+            self.assertFalse(worker.manual)
+            self.assertIsNone(self.window.next_due)
+            self.assertFalse(self.window.refresh_button.isEnabled())
+            # The old deadline must not launch another worker during this refresh.
+            clock.return_value = 1950
+            self.window.tick()
+            self.assertIs(self.window.worker, worker)
+            worker.finish()
+            self.assertTrue(self.window.automatic)
+            self.assertEqual(self.window.next_due, 2850)
+            self.assertTrue(self.window.refresh_button.isEnabled())
+            clock.return_value = 2849
+            self.window.tick()
+            self.assertIsNone(self.window.worker)
+            clock.return_value = 2850
+            self.window.tick()
+            self.assertIsNotNone(self.window.worker)
+
+    def test_refresh_now_without_auto_runs_once_with_current_settings(self):
+        self.window.interval.setValue(7)
+        self.window.session.setText("new-session.txt")
+        self.window.refresh_button.click()
+        self.assertIsNotNone(self.window.worker)
+        self.assertFalse(self.window.worker.manual)
+        self.assertFalse(self.window.automatic)
+        settings = SettingsStore(self.root).load()
+        self.assertEqual(settings.interval_minutes, 7)
+        self.assertEqual(settings.session_file, "new-session.txt")
+        self.window.worker.finish()
+        self.assertIsNone(self.window.next_due)
+        self.assertTrue(self.window.refresh_button.isEnabled())
+
+    def test_refresh_now_rejects_invalid_settings(self):
+        self.window.chrome.setText("")
+        with patch("gui.QMessageBox.warning") as warning:
+            self.window.refresh_button.click()
+        warning.assert_called_once()
+        self.assertIsNone(self.window.worker)
+        self.assertFalse(self.window.automatic)
+        self.assertIsNone(self.window.next_due)
+
+    def test_refresh_now_no_overlap_during_manual_refresh_and_stop(self):
+        for manual in (True, False):
+            with self.subTest(manual=manual):
+                if manual:
+                    self.window.start_manual()
+                else:
+                    self.window.refresh_now()
+                worker = self.window.worker
+                self.assertFalse(self.window.refresh_button.isEnabled())
+                self.window.refresh_now()
+                self.assertIs(self.window.worker, worker)
+                self.window.stop()
+                self.assertFalse(self.window.refresh_button.isEnabled())
+                self.window.refresh_now()
+                self.assertIs(self.window.worker, worker)
+                self.assertTrue(worker.stopped)
+                worker.finish()
+                self.assertIsNone(self.window.next_due)
+                self.assertTrue(self.window.refresh_button.isEnabled())
+
+    def test_stop_during_refresh_now_cancels_rescheduling(self):
+        self.window.start_auto()
+        self.window.worker.finish()
+        self.window.refresh_now()
+        worker = self.window.worker
+        self.window.stop()
+        self.assertTrue(worker.stopped)
+        worker.finish()
+        self.assertFalse(self.window.automatic)
+        self.assertIsNone(self.window.next_due)
+
     def test_stop_cancel_and_no_overlap(self):
         self.window.start_auto()
         worker = self.window.worker
@@ -128,8 +210,13 @@ class GuiTests(unittest.TestCase):
         self.assertTrue(self.window.closing)
         self.assertTrue(self.window.isVisible())
         self.assertTrue(worker.stopped)
+        self.assertFalse(self.window.refresh_button.isEnabled())
+        self.window.refresh_now()
+        self.assertIs(self.window.worker, worker)
         worker.finish()
         self.assertFalse(self.window.isVisible())
+        self.window.refresh_now()
+        self.assertIsNone(self.window.worker)
 
 
 class LogFileTests(unittest.TestCase):
