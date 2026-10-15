@@ -2,6 +2,7 @@ import io
 import json
 import logging
 from pathlib import Path
+import runpy
 import tempfile
 import threading
 import unittest
@@ -23,6 +24,27 @@ class TemporaryTest(unittest.TestCase):
 
 
 class SettingsTests(TemporaryTest):
+    def test_source_root_uses_module_directory(self):
+        with patch("sys.frozen", False, create=True), \
+             patch("sys.executable", str(self.root / "python.exe")):
+            module = runpy.run_path(str(ROOT / "settings.py"))
+        self.assertEqual(module["ROOT"], ROOT)
+
+    def test_frozen_root_uses_executable_directory(self):
+        for bundle in (self.root / "_internal", self.root / "_MEI12345"):
+            with self.subTest(bundle=bundle), \
+                 patch("sys.frozen", True, create=True), \
+                 patch("sys.executable", str(self.root / "app.exe")), \
+                 patch("sys._MEIPASS", str(bundle), create=True):
+                module = runpy.run_path(str(ROOT / "settings.py"))
+                self.assertEqual(module["ROOT"], self.root)
+                store = module["SettingsStore"]()
+                store.save(module["Settings"]())
+                self.assertEqual(store.path, self.root / "config.json")
+                self.assertTrue(store.path.is_file())
+                self.assertEqual(module["resolve_path"]("session.txt"),
+                                 self.root / "session.txt")
+
     def test_relative_paths_and_round_trip(self):
         store = SettingsStore(self.root)
         settings = Settings(interval_minutes=7, session_file="out/세션.txt")

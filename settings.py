@@ -3,11 +3,15 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+# PyInstaller's __file__ points into the bundle (a temporary directory in
+# onefile mode). Writable application data belongs beside the launched EXE.
+ROOT = (Path(sys.executable) if getattr(sys, "frozen", False)
+        else Path(__file__)).resolve().parent
 COOKIE_NAME = "PM10SESSIONID"
 COOKIE_FIELDS = ("domain", "path", "secure", "httpOnly", "sameSite")
 
